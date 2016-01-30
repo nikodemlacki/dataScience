@@ -3,7 +3,7 @@ scc <- readRDS(file="Source_Classification_Code.rds")
 # Read PM2.5 emmissions data
 pm25_all <- readRDS(file="summarySCC_PM25.rds")
 
-# Plot number 4
+# Plot number 5
 # (
 #   How have emissions from motor vehicle sources changed from 1999-2008 in Baltimore City?
 # )
@@ -14,19 +14,17 @@ source_types <- unique(scc$Data.Category)
 years <- unique(pm25_all$year)
 
 # Merge SCC data into the subset as it will be needed to generate chart
-pm25_all_extended <- merge(pm25_all, scc, by = "SCC")
+pm25_all_extended_baltimore <- subset(pm25_all, pm25_all$fips=="24510")
+pm25_all_extended <- merge(pm25_all_extended_baltimore, scc, by = "SCC")
 pm25_all_extended <-
-  subset(pm25_all_extended, grepl(x = pm25_all_extended$Short.Name, pattern = "motor vehicle"))
+  subset(pm25_all_extended, grepl(x = pm25_all_extended$SCC.Level.Two, pattern = "vehicle", ignore.case = TRUE))
 
-pm25_all_extended_baltimore <- subset(pm25_all_extended, pm25_all_extended$fips=="24510")
-
+# Plot the plot
 pm25_total_mv <- tapply(
-  pm25_all_extended$Emissions,
-  pm25_all_extended$year,
+  pm25_all_extended_baltimore$Emissions,
+  pm25_all_extended_baltimore$year,
   sum)
-pm25_totals_coal <- data.frame(years, pm25_total_coal)
+pm25_totals_mv <- data.frame(years, pm25_total_mv)
 
-plot(pm25_totals_coal, main="Total PM25 Emissions per year", xlab="Years", ylab="Emmissions")
-lines(pm25_totals_coal)
-
-
+plot(pm25_totals_mv, main="Total PM25 Vehicle Emissions per year", xlab="Years", ylab="Emmissions in Baltimore")
+lines(pm25_totals_mv)
