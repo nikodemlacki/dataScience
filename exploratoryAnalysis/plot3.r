@@ -44,4 +44,6 @@ qplot(y=pm25_total_baltimore_per_source,
       data = pm25_totals_baltimore,
       facets = source ~ .,
       main = "Emissions in Baltimore per year and per source")
+dev.copy(png, filename = "plot3.png")
+dev.off()
 

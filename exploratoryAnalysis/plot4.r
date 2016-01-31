@@ -32,3 +32,5 @@ pm25_totals_coal <- data.frame(years, pm25_total_coal)
 
 plot(pm25_totals_coal, main="Total PM25 Emissions per year", xlab="Years", ylab="Emmissions")
 lines(pm25_totals_coal)
+dev.copy(png, filename = "plot4.png")
+dev.off()

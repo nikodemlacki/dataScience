@@ -1,3 +1,4 @@
+rm(list = ls())
 # Read Source Classification Code data
 scc <- readRDS(file="Source_Classification_Code.rds")
 # Read PM2.5 emmissions data
@@ -48,3 +49,6 @@ plot(pm25_totals_baltimore, main="Total PM25 Vehicle Emissions per year",
 lines(pm25_totals_baltimore)
 plot(pm25_totals_la, main="Total PM25 Vehicle Emissions per year", xlab="Years", ylab="Emmissions in LA")
 lines(pm25_totals_la)
+
+dev.copy(png, filename = "plot6.png")
+dev.off()

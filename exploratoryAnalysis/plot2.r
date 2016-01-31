@@ -26,3 +26,5 @@ pm25_totals_baltimore <- data.frame(years, pm25_total_baltimore_per_year)
 
 plot(pm25_totals_baltimore, main="Total PM25 Emissions per year in Baltimore", xlab="Years", ylab="Emmissions")
 lines(pm25_totals_baltimore)
+dev.copy(png, filename = "plot2.png")
+dev.off()
