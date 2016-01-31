@@ -1,3 +1,4 @@
+rm(list = ls())
 # Read Source Classification Code data
 scc <- readRDS(file="Source_Classification_Code.rds")
 # Read PM2.5 emmissions data
@@ -9,6 +10,16 @@ pm25_all$fips <- factor(pm25_all$fips)
 years <- unique(pm25_all$year)
 # Extract Baltimore data
 pm25_total_baltimore <- subset(pm25_all, pm25_all$fips=="24510")
+
+# Merge SCC data into the subset
+pm25_total_baltimore <- merge(pm25_total_baltimore, scc, by = "SCC")
+# remove Event and Biogenic data categories
+pm25_total_baltimore <-
+  subset(
+    pm25_total_baltimore,
+    pm25_total_baltimore$Data.Category %in% c("Nonpoint", "Nonroad", "Onroad", "Point"))
+
+
 # and summarise it by year
 pm25_total_baltimore_per_year <- tapply(pm25_total_baltimore$Emissions, pm25_total_baltimore$year, sum)
 pm25_totals_baltimore <- data.frame(years, pm25_total_baltimore_per_year)

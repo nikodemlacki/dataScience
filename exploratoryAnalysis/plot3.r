@@ -1,5 +1,6 @@
 library(ggplot2)
 
+rm(list = ls())
 # Read Source Classification Code data
 scc <- readRDS(file="Source_Classification_Code.rds")
 # Read PM2.5 emmissions data
@@ -19,7 +20,7 @@ source_types <- unique(scc$Data.Category)
 pm25_total_baltimore <- subset(pm25_all, pm25_all$fips=="24510")
 # Merge SCC data into the subset as it will be needed to generate chart
 pm25_total_baltimore <- merge(pm25_total_baltimore, scc, by = "SCC")
-# remove Event and Biogenic data points
+# remove Event and Biogenic data categories
 pm25_total_baltimore <-
   subset(
     pm25_total_baltimore,

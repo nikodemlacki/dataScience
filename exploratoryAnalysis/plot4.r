@@ -1,3 +1,4 @@
+rm(list = ls())
 # Read Source Classification Code data
 scc <- readRDS(file="Source_Classification_Code.rds")
 # Read PM2.5 emmissions data
@@ -16,6 +17,12 @@ years <- unique(pm25_all$year)
 # Merge SCC data into the subset as it will be needed to generate chart
 pm25_all_extended <- merge(pm25_all, scc, by = "SCC")
 pm25_all_extended <- subset(pm25_all_extended, grepl(x = pm25_all_extended$Short.Name, pattern = "*\ Coal*"))
+# remove Event and Biogenic data categories
+pm25_all_extended <-
+  subset(
+    pm25_all_extended,
+    pm25_all_extended$Data.Category %in% c("Nonpoint", "Nonroad", "Onroad", "Point"))
+
 
 pm25_total_coal <- tapply(
   pm25_all_extended$Emissions,
