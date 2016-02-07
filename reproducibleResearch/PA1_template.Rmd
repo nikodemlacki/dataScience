@@ -1,0 +1,99 @@
+---
+title: "Assignment 1 Report"
+author: "Nikodem Lacki"
+date: "6 February 2016"
+---
+This report is summarizing results of analysis of activity monitoring data (steps taken per day) for two months in 2012 (October and November).
+The report is anonymous.
+
+## What is mean total number of steps taken per day?
+The below histogram shows the distribution of number of steps taken per day. It concludes that there has been
+10 days where the measurement has not been taken or the person didn't walk at all.
+2 days during that period have been really intensive with over 20,000 steps taken.
+
+```{r, echo = FALSE}
+setwd("G:/Work/Coursera/dataScienceRepo/reproducibleResearch")
+calculateSumSteps <- function(dataset) {
+  resultVector <- tapply(X = dataset$steps, INDEX = dataset$date, FUN = sum, na.rm = TRUE)
+  resultVector
+}
+
+# Load raw data for clean up and further processing
+activityRaw <- read.csv("data/activity.csv", header = TRUE)
+
+# Transform date column from default factor to a Date format
+activityRaw$date <- as.Date(as.character(activityRaw$date), format = "%Y-%m-%d")
+
+noOfStepsPerDay <- calculateSumSteps(activityRaw)
+hist(noOfStepsPerDay, breaks = length(noOfStepsPerDay), xlab = "No. of steps per day")
+```
+
+```{r}
+mean(noOfStepsPerDay)
+median(noOfStepsPerDay)
+summary(noOfStepsPerDay)
+```
+
+## What is the average daily activity pattern?
+```{r, echo = FALSE}
+activityRaw$interval <- factor(activityRaw$interval)
+meanNoOfStepsPerInterval <- tapply(activityRaw$steps, activityRaw$interval, mean, na.rm = TRUE)
+tstDF <- data.frame(meanNoOfStepsPerInterval)
+tstDF[,"interval"] <- row.names(tstDF)
+
+plot(tstDF$interval, tstDF$meanNoOfStepsPerInterval,
+     type = "l",
+     xlab = "Interval",
+     ylab = "No of Steps")
+title("Average steps in each 5 min interval")
+```
+As the code below shows, the interval containing the maximum number of steps on average is 835 and the maximum
+average value is 206.1698 steps on average.
+```{r}
+summary(meanNoOfStepsPerInterval)
+meanNoOfStepsPerInterval[meanNoOfStepsPerInterval==max(meanNoOfStepsPerInterval)]
+```
+
+## Imputing missing values
+The methodology for imputting NA values in the data set has been set to be a mean of total values per interval.
+A new data set has been created by copying the raw data set to a new one. Then a column has been added
+containing mean values for each interval, which have then been rounded to an integer number.
+Wherever there were NAs in the "steps" column, the data from the column "meanPerInterval" has ben copied.
+```{r}
+activityFull <- activityRaw
+summary(activityRaw$steps)
+# Populate NA values with mean of steps for other days within the same interval
+activityFull[, "meanPerInterval"] <- round(meanNoOfStepsPerInterval, digits = 0)
+
+activityFull$steps = ifelse(is.na(activityFull$steps), activityFull$meanPerInterval, activityFull$steps)
+```
+```{r, echo=FALSE}
+noOfStepsPerDay <- calculateSumSteps(activityFull)
+hist(noOfStepsPerDay, breaks = length(noOfStepsPerDay), xlab = "No. of steps per day")
+```
+The mean and median values rose slightly comparing to the original measurements on the raw data
+```{r}
+mean(noOfStepsPerDay)
+median(noOfStepsPerDay)
+summary(noOfStepsPerDay)
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+First the data with imputed NA values is enhanced by adding additional columns specifying whether a particular
+day is a weekday or a weekend. Then "meanPerWeekdayIndicator" column is calculated and also added to the 
+data frame.
+```{r}
+activityFull[, "weekdayIndicator"] <-
+  ifelse(weekdays(activityFull$date) %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
+activityFull$weekdayIndicator <- factor(activityFull$weekdayIndicator)
+activityFull[, "meanPerWeekdayIndicator"] <-
+  ifelse(activityFull$weekdayIndicator == "Weekday",
+         tapply(activityFull[activityFull$weekdayIndicator == "Weekday", ]$steps, activityFull[activityFull$weekdayIndicator == "Weekday", ]$interval, mean),
+         tapply(activityFull[activityFull$weekdayIndicator == "Weekend", ]$steps, activityFull[activityFull$weekdayIndicator == "Weekend", ]$interval, mean))
+```
+
+The plot showing different interval patterns:
+```{r, echo=FALSE}
+library(lattice)
+xyplot( meanPerWeekdayIndicator ~ interval | weekdayIndicator, data = activityFull, layout = c(1, 2), type = "l", xlab = "Interval", ylab = "Number of Steps")
+```
