@@ -1,0 +1,119 @@
+#Impact of wheather events on USA citizens
+
+The data analysed here contains information about impact of whether events on US citizens. The impact is divided into two major groups:
+
+* personal (fatalities and injuries)
+* financial (property damage and crops damage).
+
+The analysis below will show that "Heavy surf and wind" event is the most damaging one in both above categories.
+
+###Data Processing
+DPLYR and GGPLOT2 libraries will be used to process data and prepare results.
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+Data for producing the report is organized in folders.
+
+* code - this folder will contain all code files containing routines run on the data
+* data - this folder will contain raw and processed data
+* documentation - this folder will contain R markdown files for assembling the report as well as the final HTML/PDF report
+* figure - this folder will contain graphical images containing figures (plots) included in the report
+
+The raw data is downloaded from [Coursera](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2) website repository for this particular course and then stored in the project folder under the "data" folder.
+As a first step, the data is read into memory to perform basic exploratory analysis:
+```{r cache=TRUE}
+rawData <- read.csv("../data/repdata-data-StormData.csv.bz2")
+colnames(rawData)
+head(rawData)
+summary(rawData)
+```
+
+###Results
+
+####Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+In order to determine which types of events (EVTYPE) are most harmful for the population health across United States, a smaller data frame containing only 3 columns will be extracted:
+
+* EVTYPE
+* FATALITIES
+* INJURIES
+
+This will then be grouped by event type and ordered (descending).
+The result will allow to view the most harmful events at the top of the table.
+```{r}
+healthImpact <- rawData[c("EVTYPE", "FATALITIES", "INJURIES")]
+evTypesSummary <- data.frame(unique(healthImpact$EVTYPE))
+colnames(evTypesSummary) <- c("EVTYPE")
+evTypesSummary["SUM_FATALITIES"] <- tapply(healthImpact$FATALITIES, healthImpact$EVTYPE, sum)
+evTypesSummary["SUM_INJURIES"] <- tapply(healthImpact$INJURIES, healthImpact$EVTYPE, sum)
+evTypesSummary <- arrange(evTypesSummary, desc(SUM_FATALITIES), desc(SUM_INJURIES))
+head(evTypesSummary, n = 20)
+```
+As per the results in the table, it's apparent that the biggest whether event in terms of fatalities and injuries in USA is **"Heavy surf and wind"**, followed by **"FLOOD/RAIN/WINDS"**.
+
+To visualize the ratios a bar chart has been generated:
+```{r}
+plotData <- head(evTypesSummary, n = 15)
+tmpInjuriesDmg <- select(plotData, EVTYPE, SUM_INJURIES)
+colnames(tmpInjuriesDmg) <- c("EVTYPE", "DMG")
+tmpInjuriesDmg["DMG_TYPE"] <- "Injuries"
+plotData <- plotData[c("EVTYPE", "SUM_FATALITIES")]
+colnames(plotData) <- c("EVTYPE", "DMG")
+plotData["DMG_TYPE"] <- "Fatalities"
+plotData <- rbind(plotData, tmpInjuriesDmg)
+
+plotData$EVTYPE <- factor(plotData$EVTYPE, levels = plotData$EVTYPE[1:15])
+
+options(scipen=1000000)
+g <- ggplot(plotData, aes(x = EVTYPE, y = DMG, fill = DMG_TYPE))
+g <- g + geom_bar(stat="identity") + xlab("Event Type") + ggtitle("Relative health impact")
+g <- g + ylab("Count") + guides(fill=guide_legend(title=NULL))
+g <- g + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0))
+g
+
+```
+
+
+####Across the United States, which types of events have the greatest economic consequences?
+In order to determine which types of events have most significant economic impact on US citizens, another smaller data set will be extracted from the "rawData" data set containing:
+
+* EVTYPE
+* PROPDMG
+* CROPDMG
+
+This will then be grouped by event type and ordered (descending). Only 15 most impactful events will be listed.
+```{r}
+economicImpact <- rawData[c("EVTYPE", "PROPDMG", "CROPDMG")]
+economicImpact <- arrange(economicImpact, desc(PROPDMG, desc(CROPDMG)))
+evTypesSummary <- data.frame(unique(economicImpact$EVTYPE))
+colnames(evTypesSummary) <- c("EVTYPE")
+evTypesSummary["SUM_PROPDMG"] <- tapply(economicImpact$PROPDMG, economicImpact$EVTYPE, sum)
+evTypesSummary["SUM_CROPDMG"] <- tapply(economicImpact$CROPDMG, economicImpact$EVTYPE, sum)
+evTypesSummary["SUM"] <- evTypesSummary["SUM_PROPDMG"] + evTypesSummary["SUM_CROPDMG"]
+evTypesSummary <- arrange(evTypesSummary, desc(SUM))
+head(evTypesSummary, n = 15)
+```
+
+As per the results in the table, it's apparent that the biggest whether event in terms of damages to properties and crops USA is **"Blowing Snow"**, followed by **"Beach Erosion"** and **"Wintry mix"**.
+
+To visualize the ratios a bar chart has been generated:
+```{r}
+plotData <- head(evTypesSummary, n = 15)
+tmpCropDmg <- select(plotData, EVTYPE, SUM_CROPDMG)
+colnames(tmpCropDmg) <- c("EVTYPE", "DMG")
+tmpCropDmg["DMG_TYPE"] <- "Crop"
+plotData <- plotData[c("EVTYPE", "SUM_PROPDMG")]
+colnames(plotData) <- c("EVTYPE", "DMG")
+plotData["DMG_TYPE"] <- "Property"
+plotData <- rbind(plotData, tmpCropDmg)
+
+plotData$EVTYPE <- factor(plotData$EVTYPE, levels = plotData$EVTYPE[1:15])
+
+options(scipen=1000000)
+g <- ggplot(plotData, aes(x = EVTYPE, y = DMG, fill = DMG_TYPE))
+g <- g + geom_bar(stat="identity") + xlab("Event Type") + ggtitle("Relative economic impact")
+g <- g + ylab("Damage") + guides(fill=guide_legend(title=NULL))
+g <- g + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0))
+g
+
+```
